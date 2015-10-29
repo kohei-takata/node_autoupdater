@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Node AutoUpdater</title>
+</head>
+<script>
+    window.jQuery = window.$ = require('./jquery-2.1.4.min.js');
+    var exec = require('child_process').exec
+
+    getValues = function () {
+        $.ajax({
+            url: 'https://api.github.com/repos/nodejs/node/tags'
+        }).done(function (data) {
+            latest = Object.keys(data).map(function (key) {
+                return data[key].name
+            }).filter(function (item, index) {
+                if (item.indexOf('rc') === -1) return true;
+            })[0];
+            $('#latest').html(latest);
+            var installCmd = 'nodebrew install ' + latest;
+            return exec(installCmd, {timeout: 1000},
+                    function (error, stdout, stderr) {
+                        console.log(stdout);
+                        console.log(stderr);
+                        if (error !== null) {
+                            console.log('exec error: ' + error);
+                        }
+                    }
+            )
+        });
+        var cmd = 'nodebrew list';
+        return exec(cmd, {timeout: 1000},
+                function (error, stdout, stderr) {
+                    console.log(stdout);
+                    console.log(stderr);
+                    var test = stdout.split("current");
+                    installed = test[0].replace(/\s+/g, '<br />');
+                    current = test[1].split(" ")[1];
+
+                    $('#installed').html(installed);
+                    $('#current').html(current);
+                    if (error !== null) {
+                        console.log('exec error: ' + error);
+                    }
+                }
+        )
+    };
+    setTimeout(getValues(), 86400);
+</script>
+<body>
+<div>Latest version is <span id="latest"></span></div>
+<div>Current version is <span id="current"></span></div>
+<table>
+    <th>Installed versions are</th>
+    <tbody id="installed"></tbody>
+</table>
+</body>
+</html>
